@@ -1,0 +1,26 @@
+name: arb_merge
+description: A command-line tool to merge ARB files.
+version: 1.0.0
+homepage: https://github.com/evan361425/flutter-arb-glue
+topics: [tools, arb, internationalization]
+repository: https://github.com/evan361425/flutter-arb-glue
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  args: ^2.4.2
+  logging: ^1.2.0
+  path: ^1.9.0
+  yaml: ^3.1.2
+
+dev_dependencies:
+  test: ^1.25.2
+  coverage: ^1.7.2
+  flutter_lints: ^3.0.0
+arb_glue:
+  source: example
+  destination: example
+  base: en
+  verbose: true
+  lastModified: false

@@ -1,0 +1,53 @@
+name: Tests
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches:
+      - master
+    paths:
+      - "lib/**"
+      - "test/**"
+  pull_request:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  code-checking:
+    name: Check code format and testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Setup the dart environment.
+      - uses: dart-lang/setup-dart@v1
+
+      # Get dart dependencies.
+      - name: Install dependencies
+        run: make install
+
+      # Statically analyze the Dart code for any errors.
+      - name: Linter
+        run: make lint
+
+      - name: Format
+        run: make format
+
+      # Run widget tests for our dart project.
+      - name: Testing
+        if: github.event_name == 'pull_request'
+        run: make test
+
+      - name: Testing with Coverage
+        if: github.event_name != 'pull_request'
+        run: make test-coverage
+
+      - name: Coverage to codecov
+        if: github.event_name != 'pull_request'
+        uses: codecov/codecov-action@v4
+        with:
+          file: coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: evan361425/flutter-arb-glue
