@@ -50,6 +50,6 @@ class ArbMerge {
           '/Volumes/WD_SN770_2TB/Github/abcx3_flutter/lib/l10n_auto_translate',
       destination: '/Volumes/WD_SN770_2TB/Github/abcx3_flutter/lib/l10n',
       fileTemplate: "intl_{lang}.arb");
-  const arbGlue = ArbGlue(options);
-  arbGlue.run();
+  const arbMerge = ArbMerge(options);
+  arbMerge.run();
 } */

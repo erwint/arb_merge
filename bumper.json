@@ -1,5 +1,5 @@
 {
-  "repoLink": "https://github.com/evan361425/flutter-arb-glue",
+  "repoLink": "https://github.com/FredrikBorgstrom/arb_merge",
   "changelog": {
     "template": "{content}",
     "commitMessage": "chore: bump to {version}"

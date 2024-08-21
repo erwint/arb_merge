@@ -4,7 +4,7 @@ import 'package:args/args.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart';
 
-/// The options for the arb glue.
+/// The available options
 class Options {
   /// The source folder contains the files.
   final String source;
@@ -191,12 +191,16 @@ class Options {
     }
 
     final all = directory.listSync(recursive: true);
-    final arbFiles = all.where((e) => e is File && (e.path.endsWith('.arb') || e.path.endsWith('.json'))).cast<File>();
+    final arbFiles = all
+        .where((e) =>
+            e is File && (e.path.endsWith('.arb') || e.path.endsWith('.json')))
+        .cast<File>();
 
     if (arbFiles.isEmpty) {
       Logger.root.warning('No .arb files found in directory $dir.');
     } else {
-      Logger.root.info('Found ${arbFiles.length} .arb files in directory $dir.');
+      Logger.root
+          .info('Found ${arbFiles.length} .arb files in directory $dir.');
     }
 
     yield* arbFiles;

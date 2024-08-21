@@ -146,7 +146,7 @@ This will render as:
 
 ### Nested Structure
 
-`arb_glue` allow nested structure:
+`arb_merge` allow nested structure:
 
 ```yaml
 $prefix: myFeature
@@ -218,13 +218,13 @@ arb_glue:
 Command line:
 
 ```shell
-dart run arb_glue --source lib/l10n
+dart run arb_merge --source lib/l10n
 ```
 
 Full configuration options:
 
 ```yaml
-arb_glue:
+arb_merge:
   # The source folder contains the files.
   #
   # Type: String

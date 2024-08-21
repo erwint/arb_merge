@@ -1,10 +1,7 @@
 import 'dart:io';
 
-import 'package:arb_merge/arb_glue.dart';
+import 'package:arb_merge/arb_merge.dart';
 import 'package:arb_merge/src/yaml.dart';
-
-// import 'package:arb_glue/arb_glue.dart';
-// import 'package:arb_glue/src/yaml.dart';
 
 const version = '1.0.0';
 
