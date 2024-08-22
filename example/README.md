@@ -55,9 +55,7 @@ To merge these files using arb_merge, follow these steps:
 
 1. Execute arb_merge:
 
-    dart run arb_merge --source example/primarySource --destination example/merged --secondarySource example/secondarySource --fileTemplate intl_{lang}.arb
-
-    
+    dart run arb_merge --sources example/primarySource,example/secondarySource --destination example/merged --pattern intl_{lang}.arb --sort
 
 2. Verify Output:
    After executing arb_merge, the directory structure will be updated as follows:
@@ -85,11 +83,18 @@ Contents of `intl_en.arb`:
 ```json
 {
   "@@locale": "en",
+  "hello": "Hello {name}!",
+  "@hello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "howDoYouDo": "How do you do?",
-  "hello": "Hello",
   "one": "one",
-  "two": "two",
-  "three": "three"
+  "three": "three",
+  "two": "two"
 }
 ```
 
@@ -98,11 +103,18 @@ Contents of `intl_fr.arb`:
 ```json
 {
   "@@locale": "fr",
-  "hello": "Salut mon pote",
+  "hello": "Salut {name}!",
+  "@hello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "howDoYouDo": "Comment ça va?",
   "one": "un",
-  "two": "deux",
-  "three": "trois"
+  "three": "trois",
+  "two": "deux"
 }
 ```
 

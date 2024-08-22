@@ -1,25 +1,33 @@
 # ARB Merge
 
-ARB Merge merges translation files from multiple folders of any structure and depth
+ARB Merge merges translation files from multiple folders of any structure and depth.
+What sets this package apart from other merging packages is that it merges the content of files
+based on the @@locale language code instead of using imposed file or folder naming conventions or imposed structures.
+It can also take an arbitrary number of source folders by using a comma separated string of paths,
+and each one of these folders will be recursed through so files can be nested to any depth.
+
+## Background
+
+I created this package because I couldn't find a package that supported multiple input folders (with different paths).
+I have one folder with small translation files that are continuously updated and automatically translated by Google,
+and I have another folder with large translation files that don't auto-translate.
+So basically it was an economic incentive to develop this package because Google had started to charge me for
+translating those large monolithic files
+
+## Credits and Copyright
+This package is based on the excellent [arb_glue] package by Shueh Chou Lu, but I needed some other
+features so I modified his code, made some additions and created this package.
 
 
 Features:
 
 -   Supports [JSON] and [ARB] source files
--   [Supports unlimited nesting and arbitrary file naming convention](#nested-structure)
--   Supports two different source folders
+-   Supports unlimited nesting, arbitrary file and folder naming convention
+-   Supports unlimited* source folders
+-   The translation keys of the merged files can, if so desired, be sorted alphabetically
+-   Supports optional verbose output for debugging purposes
 
-
-Table of Contents:
-
--   [Installation](#installation)
--   [Usage](#usage)
--   [Supported formats](#supported-formats)
-    -   [Schema](#schema)
-    -   [Prefix](#prefix)
-    -   [Nested Structure](#nested-structure)
-    -   [Select and plural](#select-and-plural)
--   [Configuration](#configuration)
+* limited by your command line's input buffer
 
 ## Installation
 
@@ -36,254 +44,52 @@ dev_dependencies:
 
 ## Usage
 
-Original Structure:
+inline command options:
 
-```text
-.
-└── lib/
-    └── l10n/
-        ├── en/
-        │   ├── global.yaml
-        │   └── feature-1.yaml
-        └── zh/
-            ├── global.yaml
-            └── feature-1.yaml
+`--sources`
+A comma separated string with all the paths of the folders you would like to merge files from.
+
+Example:
+```shell
+dart run arb_merge --sources intl_autoTranslated,intl_static,assets/manual_translations --destination lib/intl
 ```
 
-Execution:
+`--destination`
+The path of the destination folder for the merged files
+
+`--pattern`
+A string that will be used to name the created files where `{lang}` will be replaced by the language code.
+Default value: `intl_{lang}.arg` which will render the file name `intl_en.arb` for english 
+
+`--verbose` 
+Setting verbose will output details on the files processed, default value: false
+
+`--sort`
+Will sort the keys in each output file alphabetically, default value: false
 
 ```shell
-dart run arb_glue
+dart run arb_glue --
 # or
 flutter pub run arb_glue
 ```
 
-Resulting structure:
+You can also set all the options' values in your pubspec.yaml file,
+and then simply run `dart run arb_merge` to run arb_merge with the values from pubspec.
+Please not that any options set on the command line will then override those values.
 
-```text
-.
-└── lib/
-    └── l10n/
-        ├── en/
-        │   ├── global.yaml
-        │   └── feature-1.yaml
-        ├── zh/
-        │   ├── global.yaml
-        │   └── feature-1.yaml
-        ├── en.arb
-        └── zh.arb
+```yaml
+arb_merge:
+  sources: example/primarySource,example/secondarySource
+  destination: example/merged
+  sort: false
+  pattern: 'intl_{lang}.arb'
+  verbose: false
 ```
 
 ## Supported formats
 
-Currently, ARB Glue supports JSON and YAML encoded files.
+arb_merge supports JSON and ARB files.
 
-In addition to ARB format, it allows writing descriptions directly into one key:
-
-```json
-{
-  "myButton": "My Button {type}",
-  "@myButton": {
-    "description": "My custom button label",
-    "placeholders": {
-      "type": {"type": "String"}
-    }
-  }
-}
-```
-
-This is equivalent to:
-
-```yaml
-myButton: My Button
-"@myButton":
-  description: My custom button label
-  placeholders:
-    type: {type: String}
-```
-
-And equal to:
-
-```yaml
-myButton:
-- My Button
-# description and placeholders can switch position
-- My custom button label
-- type: {type: String}
-```
-
-### Schema
-
-Flutter's localization (l10n) has several custom schemas,
-which are elaborated upon in [arb.schema.json](./arb.schema.json).
-
-If you're utilizing VSCode, streamline the schema setup by incorporating the following configuration:
-
-```json
-{
-  "yaml.schemas": {
-    ".vscode/arb.schema.json": ["/lib/l10n/**/*.yaml"]
-  }
-}
-```
-
-### Prefix
-
-Each file can have its own prefix by setting `$prefix`:
-
-```yaml
-$prefix: myFeature
-button: My Feature Button
-```
-
-This will render as:
-
-```json
-{
-  "myFeatureButton": "My Feature Button"
-}
-```
-
-### Nested Structure
-
-`arb_merge` allow nested structure:
-
-```yaml
-$prefix: myFeature
-subModule: # this key is the default prefix value
-  $prefix: awesome # it can be customize by `$prefix`
-  button: My Awesome Button
-```
-
-This will render as:
-
-```json
-{
-  "myFeatureAwesomeButton": "My Awesome Button"
-}
-```
-
-### Select and plural
-
-`arb_glue` can let you use map on `select` or `plural` text:
-
-```yaml
-title:
-- car: Car
-  bicycle: Bicycle
-  scooter: Scooter
-  other: UNKNOWN
-- {tool: {type: String, mode: select}} # type and mode is not required, since they are using default values
-                                       # strictly equal to: `- {tool: {}}`
-counter:
-- =0: Empty
-  =1: One Item
-  other: '{count} Items'
-- {count: {type: int, mode: plural}} # type and mode is required in this case
-```
-
-This will render as:
-
-```json
-{
-  "title": "{tool, select, car{Car} bicycle{Bicycle} scooter{Scooter} other{UNKNOWN}}",
-  "@title": {
-    "placeholders": {
-      "tool": { "type": "String" }
-    }
-  },
-  "counter": "{count, plural, =0{Empty} =1{One Item} other{{count} Item}}",
-  "@counter": {
-    "placeholders": {
-      "count": { "type": "int" }
-    }
-  }
-}
-```
-
-## Configuration
-
-There are two methods to configure the process:
-via pubspec.yaml or through command-line arguments.
-
-pubspec.yaml:
-
-```yaml
-# pubspec.yaml
-name: MyApp
-arb_glue:
-  source: lib/l10n
-```
-
-Command line:
-
-```shell
-dart run arb_merge --source lib/l10n
-```
-
-Full configuration options:
-
-```yaml
-arb_merge:
-  # The source folder contains the files.
-  #
-  # Type: String
-  source: lib/l10n
-
-  # The destination folder where the files will be generated.
-  #
-  # Type: String
-  destination: lib/l10n
-
-  # Blacklisted folders inside the [source].
-  #
-  # Type: List<String>
-  exclude:
-
-  # The author of these messages.
-  #
-  # In the case of localized ARB files it can contain the names/details of the translator.
-  # see: https://github.com/google/app-resource-bundle/wiki/ApplicationResourceBundleSpecification#global-attributes
-  # Type: String
-  author:
-
-  # It describes (in text) the context in which all these resources apply.
-  #
-  # see: https://github.com/google/app-resource-bundle/wiki/ApplicationResourceBundleSpecification#global-attributes
-  # Type: String
-  context:
-
-  # Whether to add the last modified time of the file.
-  #
-  # Type: bool
-  lastModified: true
-
-  # The fallback values of the arb file.
-  #
-  # If not provided, the base locale will be the first locale found in the
-  # source folder.
-  #
-  # Based locale provide fallback placeholders to other locales.
-  #
-  # Type: String
-  base:
-
-  # The default value of other in select/plural mode.
-  #
-  # See example to get more detailed.
-  #
-  # Type: String
-  defaultOtherValue: UNKNOWN
-
-  # The file template for the output arb file.
-  #
-  # Type: String
-  fileTemplate: '{lang}.arb'
-
-  # Whether to print verbose output.
-  #
-  # Type: bool
-  verbose: false
-```
 
 [ARB]: https://github.com/google/app-resource-bundle/wiki/ApplicationResourceBundleSpecification
+[arb_glue]: https://github.com/evan361425/flutter-arb-glue

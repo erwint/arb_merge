@@ -1,8 +1,15 @@
 {
   "@@locale": "en",
+  "hello": "Hello {name}!",
+  "@hello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "howDoYouDo": "How do you do?",
-  "hello": "Hello",
   "one": "one",
-  "two": "two",
-  "three": "three"
+  "three": "three",
+  "two": "two"
 }

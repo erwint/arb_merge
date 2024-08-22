@@ -5,8 +5,10 @@ import 'package:arb_merge/src/yaml.dart';
 
 const version = '1.0.0';
 
-Future<void> main(List<String> args) async {
-  if (args.contains('--help') || args.contains('-h')) {
+Future<void> main(List<String> inlineArgs) async {
+  if (inlineArgs.contains('--help') || inlineArgs.contains('-h')) {
+    final argParser =
+        Options.createArgParser(Options.createDefaultValues(_loadPubSpec()));
     // ignore: avoid_print
     print([
       'arb_glue: Generate arb files from the source folder.',
@@ -14,19 +16,20 @@ Future<void> main(List<String> args) async {
       'Usage: arb_glue [options]',
       '',
       'Options:',
-      Options.getArgParser(args, _loadPubSpec()).usage,
+      argParser.usage,
     ].join('\n'));
     return;
   }
 
-  if (args.contains('--version')) {
+  if (inlineArgs.contains('--version')) {
     // ignore: avoid_print
     print('arb_glue: $version');
     return;
   }
-  final option = Options.fromArgs(args, _loadPubSpec());
+  final argsFromPubspec = _loadPubSpec();
+  final options = Options.fromArgsAndPubSpec(inlineArgs, argsFromPubspec);
 
-  ArbMerge(option).run();
+  ArbMerge(options).run();
 }
 
 Map<String, dynamic> _loadPubSpec() {

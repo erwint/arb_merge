@@ -1,8 +1,15 @@
 {
   "@@locale": "fr",
-  "hello": "Salut mon pote",
+  "hello": "Salut {name}!",
+  "@hello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "howDoYouDo": "Comment ça va?",
   "one": "un",
-  "two": "deux",
-  "three": "trois"
+  "three": "trois",
+  "two": "deux"
 }

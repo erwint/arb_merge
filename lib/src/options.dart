@@ -2,102 +2,76 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:logging/logging.dart';
-import 'package:path/path.dart';
 
 /// The available options
 class Options {
-  /// The source folder contains the files.
-  final String source;
+  /// The source folders
+  final List<String>? sources;
 
-  final String? secondarySource;
+  /// The destination folder where the merged files will be stored
+  final String? destination;
 
-  /// The destination folder where the files will be generated.
-  final String destination;
+  /// Whether to sort the keys in the output arb file or leave them in their merged order, defaults to true
+  final bool sort;
 
-  /// Blacklisted folders inside the [source].
-  final List<String> exclude;
+  /// The file naming pattern for the output arb file, "{lang}" will be replaced by the language code
+  final String pattern;
 
-  /// The fallback values of the arb file.
-  final String? base;
-
-  /// The default value of other in select/plural mode.
-  final String defaultOtherValue;
-
-  /// The author of these messages.
-  final String? author;
-
-  /// It describes (in text) the context in which all these resources apply.
-  final String? context;
-
-  /// Whether to add the last modified time of the file.
-  final bool lastModified;
-
-  /// The file template for the output arb file.
-  final String fileTemplate;
-
-  /// Whether to print verbose output.
+  /// Whether to print verbose output
   final bool verbose;
 
   const Options({
-    required this.source,
+    required this.sources,
     required this.destination,
-    this.secondarySource,
-    this.exclude = const [],
-    this.base,
-    this.defaultOtherValue = 'UNKNOWN',
-    this.lastModified = true,
-    this.author,
-    this.context,
-    this.fileTemplate = '{lang}.arb',
+    this.sort = true,
+    this.pattern = '{lang}.arb',
     this.verbose = false,
   });
 
-  static ArgParser getArgParser(List<String> args, Map<String, dynamic> o) {
-    final src = o['source'] is String ? o['source'] : 'lib/l10n';
-    final secondarySrc =
-        o['secondarySource'] is String ? o['secondarySource'] : null;
-    final dst = o['destination'] is String ? o['destination'] : 'lib/l10n';
-    final base = o['base'] is String ? o['base'] : null;
-    final defaultOtherValue =
-        o['defaultOtherValue'] is String ? o['defaultOtherValue'] : 'UNKNOWN';
-    final author = o['author'] is String ? o['author'] : null;
-    final context = o['context'] is String ? o['context'] : null;
-    final lastModified = o['lastModified'] is bool ? o['lastModified'] : true;
-    final fileTemplate =
-        o['fileTemplate'] is String ? o['fileTemplate'] : '{lang}.arb';
-    final verbose = o['verbose'] is bool ? o['verbose'] : false;
-    final exc = o['exclude'];
-    final exclude = exc is Iterable ? exc.cast<String>() : <String>[];
+  static Map<String, dynamic> createDefaultValues(Map<String, dynamic> map) {
+    final sourceArg = map['sources'].split(',');
+    final src = sourceArg is Iterable ? sourceArg.cast<String>() : <String>[];
+    final dst = map['destination'] is String ? map['destination'] : null;
+    final sort = map['sort'] is bool ? map['sort'] : false;
+    final pattern =
+        map['pattern'] is String ? map['pattern'] : 'intl_{lang}.arb';
+    final verbose = map['verbose'] is bool ? map['verbose'] : false;
 
+    return {
+      'sources': src,
+      'destination': dst,
+      'sort': sort,
+      'pattern': pattern,
+      'verbose': verbose,
+    };
+  }
+
+  static ArgParser createArgParser(Map<String, dynamic> defaultValues) {
     final parser = ArgParser()
-      ..addOption('source', abbr: 's', defaultsTo: src)
-      ..addOption('secondarySource', defaultsTo: secondarySrc)
-      ..addOption('destination', abbr: 'd', defaultsTo: dst)
-      ..addMultiOption('exclude', abbr: 'e', defaultsTo: exclude)
-      ..addOption('base', abbr: 'b', defaultsTo: base)
-      ..addOption('defaultOtherValue', defaultsTo: defaultOtherValue)
-      ..addFlag('lastModified', defaultsTo: lastModified)
-      ..addOption('author', defaultsTo: author)
-      ..addOption('context', defaultsTo: context)
-      ..addOption('fileTemplate', defaultsTo: fileTemplate)
-      ..addFlag('verbose', abbr: 'v', defaultsTo: verbose);
+      ..addMultiOption('sources',
+          abbr: 's', defaultsTo: defaultValues['sources'])
+      ..addOption('destination',
+          abbr: 'd', defaultsTo: defaultValues['destination'])
+      ..addFlag('sort', abbr: 'o', defaultsTo: defaultValues['sort'])
+      // ..addFlag('sort', abbr: 'o', defaultsTo: false)
+      ..addOption('pattern', abbr: 'p', defaultsTo: defaultValues['pattern'])
+      ..addFlag('verbose', abbr: 'v', defaultsTo: defaultValues['verbose']);
 
     return parser;
   }
 
-  factory Options.fromArgs(List<String> args, Map<String, dynamic> o) {
-    final parsed = getArgParser(args, o).parse(args);
+  factory Options.fromArgsAndPubSpec(
+      List<String> args, Map<String, dynamic> mapFromPubSpec) {
+    final defaultValues = createDefaultValues(mapFromPubSpec);
+    final parser = createArgParser(defaultValues);
+    final parsed = parser.parse(args);
+    print('parsed sort: ${parsed['sort']}');
+    print('parsed verbose: ${parsed['verbose']}');
     final options = Options(
-      source: parsed['source'],
-      secondarySource: parsed['secondarySource'],
+      sources: parsed['sources'],
       destination: parsed['destination'],
-      exclude: parsed['exclude'],
-      base: parsed['base'],
-      defaultOtherValue: parsed['defaultOtherValue'],
-      author: parsed['author'],
-      context: parsed['context'],
-      lastModified: parsed['lastModified'],
-      fileTemplate: parsed['fileTemplate'],
+      sort: parsed['sort'],
+      pattern: parsed['pattern'],
       verbose: parsed['verbose'],
     );
 
@@ -106,17 +80,22 @@ class Options {
     Logger.root.onRecord.listen((record) => print(record.message));
     Logger.root
         .info(parsed.options.map((key) => '$key: ${parsed[key]}').join('\n'));
-
     return options;
   }
 
-  void verify() {
-    String? error = _verifyFolder(source);
+  void validate() {
+    if (sources == null) {
+      throw ArgumentError('The source folders cannot be null.');
+    }
+    if (destination == null) {
+      throw ArgumentError('The destination folder cannot be null.');
+    }
+    /* String? error = _verifyFolder(sources!);
     if (error != null) {
       throw ArgumentError('The source $error');
-    }
+    } */
 
-    error = _verifyFolder(destination);
+    String? error = _verifyFolder(destination!);
     if (error != null) {
       throw ArgumentError('The destination $error');
     }
@@ -130,79 +109,27 @@ class Options {
     if (!Directory(folder).existsSync()) {
       return 'folder does not exist.';
     }
-
     return null;
   }
-
-  Iterable<Directory> folders() sync* {
-    yield* _folders(source);
-  }
-
-  Iterable<File> files() sync* {
-    yield* _files(source);
-  }
-
-  Iterable<File> secondaryFiles() sync* {
-    if (secondarySource != null) {
-      yield* _files(secondarySource!);
-    }
-  }
-
-  Iterable<Directory> secondaryFolders() sync* {
-    if (secondarySource != null) {
-      yield* _folders(secondarySource!);
-    }
-  }
-
-  Iterable<Directory> _folders(String dir) sync* {
-    final all = Directory(dir).listSync();
-    Iterable<Directory> filtered = all
-        .where((e) => e is Directory && !exclude.contains(basename(e.path)))
-        .cast<Directory>();
-
-    if (base != null) {
-      for (final e in filtered) {
-        if (basename(e.path) == base) {
-          yield e;
-        }
-      }
-
-      filtered = filtered.where((e) => basename(e.path) != base);
-    }
-    yield* filtered;
-  }
-
-  /*Iterable<File> _files(String dir) sync* {
-    final all = Directory(dir).listSync();
-    yield* all.where((e) => e is File && e.path.endsWith('.arb')).cast<File>();
-  }*/
-
-  void write(String lang, String content) {
-    final file = fileTemplate.replaceAll('{lang}', lang);
-    Logger.root.info('writing to ${join(destination, file)}');
-    File(join(destination, file)).writeAsStringSync(content);
-  }
-
-  Iterable<File> _files(String dir) sync* {
-    final directory = Directory(dir);
-    if (!directory.existsSync()) {
-      Logger.root.warning('Directory $dir does not exist.');
-      return;
-    }
-
-    final all = directory.listSync(recursive: true);
-    final arbFiles = all
-        .where((e) =>
-            e is File && (e.path.endsWith('.arb') || e.path.endsWith('.json')))
-        .cast<File>();
-
-    if (arbFiles.isEmpty) {
-      Logger.root.warning('No .arb files found in directory $dir.');
-    } else {
-      Logger.root
-          .info('Found ${arbFiles.length} .arb files in directory $dir.');
-    }
-
-    yield* arbFiles;
-  }
 }
+
+
+
+/* static ArgParser getArgParser(Map<String, dynamic> map) {
+    final sourceArg = map['sources'].split(',');
+    final src = sourceArg is Iterable ? sourceArg.cast<String>() : <String>[];
+    final sort = map['sort'] is bool ? map['sort'] : false;
+    final dst = map['destination'] is String ? map['destination'] : null;
+    final pattern =
+        map['pattern'] is String ? map['pattern'] : 'intl_{lang}.arb';
+    final verbose = map['verbose'] is bool ? map['verbose'] : false;
+
+    final parser = ArgParser()
+      ..addMultiOption('sources', abbr: 's', defaultsTo: src)
+      ..addOption('destination', abbr: 'd', defaultsTo: dst)
+      ..addFlag('sort', abbr: 'o', defaultsTo: sort)
+      ..addOption('pattern', abbr: 'p', defaultsTo: pattern)
+      ..addFlag('verbose', abbr: 'v', defaultsTo: verbose);
+
+    return parser;
+  } */
