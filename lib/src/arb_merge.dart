@@ -57,8 +57,6 @@ class ArbMerge {
   }
 }
 
-
-
 /* main(List<String> args) {
   const options = Options(
       source: '/Volumes/WD_SN770_2TB/Github/abcx3_flutter/lib/l10n_static',
