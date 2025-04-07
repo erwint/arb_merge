@@ -49,12 +49,15 @@ class ArbMerge {
     return Map.fromEntries(
       arb.entries.toList()
         ..sort((a, b) {
-          final keyA = a.key.startsWith("@") ? a.key.substring(1) : a.key;
-          final keyB = b.key.startsWith("@") ? b.key.substring(1) : b.key;
+          final keyA = transformKey(a.key);
+          final keyB = transformKey(b.key);
+
           return keyA.compareTo(keyB);
         }),
     );
   }
+
+  String transformKey(String key) => key.startsWith("@") ? "${key.substring(1)}@" : key;
 }
 
 /* main(List<String> args) {
